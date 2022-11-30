@@ -6,7 +6,9 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name="user")
@@ -15,10 +17,8 @@ public class User {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     @Column(name="user_id")
-    private int user_id;
+    private Long userId;
 
-    @Column(name="role")
-    private int role;
     @Column(name="first_name")
     private String firstName;
 
@@ -37,6 +37,13 @@ public class User {
     @JsonIgnore
     private Business business;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
+
+
     @Column(name = "username")
     private String username;
 
@@ -48,8 +55,7 @@ public class User {
     private List<Parking> parkings;
     public  User(){}
 
-    public User(int role, String firstName, String lastName, String email, String password, String username) {
-        this.role = role;
+    public User(String firstName, String lastName, String email, String password, String username) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -57,24 +63,18 @@ public class User {
         this.username = username;
     }
 
-    public User(int role, String firstName, String lastName, String email, String password, boolean b) {
+    public User(String firstName, String lastName, String email, String password, boolean b) {
     }
 
-
-    public int getUser_id() {
-        return user_id;
+    public User(String username, String email, String encode) {
     }
 
-    public void setUser_id(int user_id) {
-        this.user_id = user_id;
+    public Set<Role> getRoles() {
+        return roles;
     }
 
-    public int getRole() {
-        return role;
-    }
-
-    public void setRole(int role) {
-        this.role = role;
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 
     public String getFirstName() {
@@ -122,6 +122,19 @@ public class User {
     }
 
 
+//
+
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+
+
     public String getUsername() {
         return username;
     }
@@ -144,13 +157,13 @@ public class User {
     @Override
     public String toString() {
         return "User{" +
-                "user_id=" + user_id +
-                ", role=" + role +
+                "userId=" + userId +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", business=" + business +
+                ", roles=" + roles +
                 ", username='" + username + '\'' +
                 ", parkings=" + parkings +
                 '}';

@@ -57,7 +57,7 @@ public class UserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("UserId " + id + "not found"));
 
-        user.setRole(userRequest.getRole());
+
         user.setFirstName(userRequest.getFirstName());
         user.setLastName(userRequest.getLastName());
         user.setEmail(userRequest.getEmail());

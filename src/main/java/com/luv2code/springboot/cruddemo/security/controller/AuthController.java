@@ -1,113 +1,138 @@
 package com.luv2code.springboot.cruddemo.security.controller;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
+
 import com.luv2code.springboot.cruddemo.entity.Business;
-import com.luv2code.springboot.cruddemo.entity.Parking;
+import com.luv2code.springboot.cruddemo.entity.ERole;
+import com.luv2code.springboot.cruddemo.entity.Role;
 import com.luv2code.springboot.cruddemo.entity.User;
 import com.luv2code.springboot.cruddemo.repository.BusinessRepository;
+import com.luv2code.springboot.cruddemo.repository.RoleRepository;
 import com.luv2code.springboot.cruddemo.repository.UserRepository;
-import com.luv2code.springboot.cruddemo.security.UserLoginDTO;
-import com.luv2code.springboot.cruddemo.security.UserSignUpDTO;
+import com.luv2code.springboot.cruddemo.security.jwt.JwtUtils;
+import com.luv2code.springboot.cruddemo.security.payload.MessageResponse;
+import com.luv2code.springboot.cruddemo.security.payload.UserInfoResponse;
+import com.luv2code.springboot.cruddemo.security.payload.request.LoginRequest;
+import com.luv2code.springboot.cruddemo.security.payload.request.SignUpRequest;
+import com.luv2code.springboot.cruddemo.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import java.util.Date;
+
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
+    @Autowired
+    AuthenticationManager authenticationManager;
 
     @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private BusinessRepository businessRepository;
+    UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    RoleRepository roleRepository;
 
-    @GetMapping()
-    public String home(){
-        return "Hello";
-    }
+    @Autowired
+    PasswordEncoder encoder;
 
-  /*  @PostMapping("/login")
-    public ResponseEntity<HttpStatus> login(@RequestBody UserLoginDTO user) throws Exception {
+    @Autowired
+    JwtUtils jwtUtils;
 
-        Authentication authObject = null;
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
-            SecurityContextHolder.getContext().setAuthentication(authObject);
-        } catch (BadCredentialsException e) {
-            throw new Exception("Invalid credentials");
-        }
+    @Autowired
+    BusinessRepository businessRepository;
 
-        return new ResponseEntity<HttpStatus>(HttpStatus.OK);
-    }
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
-   */
-
-    @PostMapping("/login")
-    public ResponseEntity<String> authenticateUser(@RequestBody UserLoginDTO loginDto){
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                loginDto.getEmail(), loginDto.getPassword()));
+        Authentication authentication = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return new ResponseEntity<>("User signed-in successfully!", HttpStatus.OK);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE)
+                .body(new UserInfoResponse(Math.toIntExact(userDetails.getId()),
+                        userDetails.getUsername(),
+                        userDetails.getEmail(),
+                        roles, jwtCookie.getValue()
+                        ));
+
+
     }
 
-
-
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody UserSignUpDTO signUpDto) {
-
-        // add check for username exists in a DB
-        if (userRepository.existsByUsername(signUpDto.getUsername())) {
-            return new ResponseEntity<>("Username is already taken!", HttpStatus.BAD_REQUEST);
-        }
-        if (userRepository.existsByEmail(signUpDto.getEmail())) {
-            return new ResponseEntity<>("Email is already taken!", HttpStatus.BAD_REQUEST);
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
+        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
         }
 
-        if(businessRepository.existsByName(signUpDto.getName())){
+        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+        }
+
+        if(businessRepository.existsByName(signUpRequest.getName())){
             return new ResponseEntity<>("Name is already taken", HttpStatus.BAD_REQUEST);
         }
 
-        if (businessRepository.existsByEmail(signUpDto.getEmail())){
+        if (businessRepository.existsByEmail(signUpRequest.getEmail())){
             return new ResponseEntity<>("Email is already taken!", HttpStatus.BAD_REQUEST);
         }
 
+
         Business b1 = new Business();
-        b1.setName(signUpDto.getName());
-        b1.setEmail(signUpDto.getEmail());
-        b1.setFoundationDate(signUpDto.getFoundationDate());
-        b1.setRegistrationDate(signUpDto.getRegistrationDate());
+        b1.setName(signUpRequest.getName());
+        b1.setEmail(signUpRequest.getEmail());
+        b1.setFoundationDate(signUpRequest.getFoundationDate());
+        b1.setRegistrationDate(signUpRequest.getRegistrationDate());
 
         Business business = businessRepository.save(b1);
-        User user = new User();
-        user.setFirstName(signUpDto.getFirstName());
-        user.setLastName(signUpDto.getLastName());
-        user.setEmail(signUpDto.getEmail());
-        user.setPassword(signUpDto.getPassword());
-        user.setUsername(signUpDto.getUsername());
+
+
+
+        // Create new user's account
+         User user = new User();
+        user.setFirstName(signUpRequest.getFirstName());
+        user.setLastName(signUpRequest.getLastName());
+        user.setEmail(signUpRequest.getEmail());
+        user.setPassword(encoder.encode(signUpRequest.getPassword()));
+        user.setUsername(signUpRequest.getUsername());
+
+
+        Set<String> strRoles = signUpRequest.getRole();
+        Set<Role> roles = new HashSet<>();
+
+        Role businessAdmin = roleRepository.findByName(ERole.ROLE_ADMIN)
+                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+        roles.add(businessAdmin);
 
         user.setBusiness(business);
-
+        user.setRoles(roles);
         userRepository.save(user);
-        return new ResponseEntity<>("User registered successfully", HttpStatus.OK);
 
+        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 
     @PutMapping("/business/{id}/approve")
@@ -128,4 +153,17 @@ public class AuthController {
         business.setComment(businessRequest.getComment());
         return new ResponseEntity<>(businessRepository.save(business), HttpStatus.OK);
     }
+
+
+
+    @PostMapping("/signout")
+    public ResponseEntity<?> logoutUser() {
+        ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(new MessageResponse("You've been signed out!"));
+    }
 }
+
+
+
+
