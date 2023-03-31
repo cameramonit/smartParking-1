@@ -1,6 +1,7 @@
 package com.luv2code.springboot.cruddemo.security.jwt;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +19,7 @@ import io.jsonwebtoken.*;
 
 @Component
 public class JwtUtils {
+
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${parking.app.jwtSecret}")
@@ -29,6 +31,11 @@ public class JwtUtils {
     @Value("${parking.app.jwtCookieName}")
     private String jwtCookie;
 
+
+    private UserDetailsImpl userDetails;
+
+
+
     public String getJwtFromCookies(HttpServletRequest request) {
         Cookie cookie = WebUtils.getCookie(request, jwtCookie);
         if (cookie != null) {
@@ -38,8 +45,8 @@ public class JwtUtils {
         }
     }
 
-    public ResponseCookie generateJwtCookie(UserDetailsImpl userPrincipal) {
-        String jwt = generateTokenFromUsername(userPrincipal.getUsername());
+    public ResponseCookie generateJwtCookie(UserDetailsImpl userPrincipal, List<String> roles) {
+        String jwt = generateTokenFromUsername(userPrincipal.getUsername(), roles);
         ResponseCookie cookie = ResponseCookie.from(jwtCookie, jwt).path("/api").maxAge(24 * 60 * 60).httpOnly(true).build();
         return cookie;
     }
@@ -72,11 +79,13 @@ public class JwtUtils {
         return false;
     }
 
-    public String generateTokenFromUsername(String username) {
+    public String generateTokenFromUsername(String username, List<String> roles) {
+
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .claim("role:", roles)
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }

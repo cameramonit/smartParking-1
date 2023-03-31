@@ -21,6 +21,11 @@ public class UserInfoResponse {
         this.jwt= jwt;
     }
 
+    public UserInfoResponse() {
+
+    }
+
+
     public Integer getId() {
         return id;
     }

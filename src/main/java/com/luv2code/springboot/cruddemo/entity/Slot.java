@@ -17,7 +17,7 @@ public class Slot {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="slot_id")
-    private int slotId;
+    private int id;
 
     @Column(name="number")
     private int number;
@@ -50,11 +50,11 @@ public class Slot {
     }
 
     public int getSlotId() {
-        return slotId;
+        return id;
     }
 
     public void setSlotId(int slotId) {
-        this.slotId = slotId;
+        this.id = slotId;
     }
 
     public int getNumber() {
@@ -101,7 +101,7 @@ public class Slot {
     @Override
     public String toString() {
         return "Slot{" +
-                "slotId=" + slotId +
+                "slotId=" + id +
                 ", number=" + number +
                 ", location='" + location + '\'' +
                 ", status=" + status +

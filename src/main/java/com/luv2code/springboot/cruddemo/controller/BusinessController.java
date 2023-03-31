@@ -5,6 +5,7 @@ import com.luv2code.springboot.cruddemo.entity.Business;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -20,12 +21,14 @@ public class BusinessController {
     BusinessRepository businessRepository;
 
     @GetMapping("/businesses")
+    @PreAuthorize("hasRole('SUPERADMIN')")
     public List<Business> all(){
 
        return businessRepository.findAll();
     }
 
     @GetMapping("/businesses/{id}")
+    @PreAuthorize("hasRole('SUPERADMIN')")
     public Optional<Business> byId(@PathVariable int id){
 
         // int bookingId = Integer.parseInt(id);
@@ -34,6 +37,7 @@ public class BusinessController {
     }
 
     @PostMapping("/businesses")
+    @PreAuthorize("hasRole('SUPERADMIN')")
     public Business create(@RequestBody Business body){
 
         String name = body.getName();
@@ -44,12 +48,12 @@ public class BusinessController {
         int status = body.getStatus();
         String comment = body.getComment();
 
-
         return businessRepository.save(new Business(name, email, foundationDate, registrationDate, businessNumber, status, comment));
     }
 
 
     @PutMapping("/businesses/{id}")
+    @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<Business> updateBusiness(@PathVariable("id") int id, @RequestBody Business business) {
         Optional<Business> businessData = businessRepository.findById(id);
 
@@ -70,6 +74,7 @@ public class BusinessController {
     }
 
     @DeleteMapping("/businesses/{id}")
+    @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<HttpStatus> deleteBusiness(@PathVariable("id") int id){
 
         try{
@@ -79,8 +84,5 @@ public class BusinessController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    
-
 
 }

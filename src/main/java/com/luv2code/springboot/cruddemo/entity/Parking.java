@@ -18,7 +18,7 @@ public class Parking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="parking_id")
-    private int parkingId;
+    private int id;
 
     @Column(name="name")
     private String name;
@@ -60,11 +60,11 @@ public class Parking {
     }
 
     public int getParkingId() {
-        return parkingId;
+        return id;
     }
 
     public void setParkingId(int parkingId) {
-        this.parkingId = parkingId;
+        this.id = parkingId;
     }
 
     public String getName() {
@@ -118,7 +118,7 @@ public class Parking {
     @Override
     public String toString() {
         return "Parking{" +
-                "parkingId=" + parkingId +
+                "parkingId=" + id +
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 ", slotPrice=" + slotPrice +

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +26,14 @@ public class BookingController {
     SlotRepository slotRepository;
 
     @GetMapping("/bookings")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN') or hasRole('SUPERVISOR')")
     public List<Booking> all(){
 
         return bookingRepository.findAll();
     }
 
     @GetMapping("/bookings/{id}")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN') or hasRole('SUPERVISOR')")
     public Optional<Booking> byId(@PathVariable int id){
 
        // int bookingId = Integer.parseInt(id);
@@ -39,6 +42,7 @@ public class BookingController {
     }
 
     @PostMapping("/slots/{slotId}/bookings")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<Booking> createBooking(@PathVariable(value = "slotId") int slotId,
                                                  @RequestBody Booking bookingRequest) {
         Slot slot = slotRepository.findById(slotId).orElseThrow(() -> new ResourceNotFoundException("Not found slot with id = " + slotId));
@@ -49,6 +53,7 @@ public class BookingController {
 
 
     @PutMapping("/bookings/{id}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<Booking> updateBooking(@PathVariable("id") int id, @RequestBody Booking bookingRequest) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("BookingId " + id + "not found"));
@@ -65,6 +70,7 @@ public class BookingController {
 
 
     @DeleteMapping("/bookings/{id}")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN') or hasRole('SUPERVISOR')")
     public ResponseEntity<HttpStatus> deleteBooking(@PathVariable("id") int id){
 
         try{

@@ -18,7 +18,7 @@ public class Business {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="business_id")
-	private int businessId;
+	private int id;
 	
 	@Column(name="name")
 	private String name;
@@ -60,11 +60,11 @@ public class Business {
 
 
 	public int getBusinessId() {
-		return businessId;
+		return id;
 	}
 
 	public void setBusinessId(int businessId) {
-		this.businessId = businessId;
+		this.id = businessId;
 	}
 
 	public String getName() {
@@ -129,7 +129,7 @@ public class Business {
 	@Override
 	public String toString() {
 		return "Business{" +
-				"businessId=" + businessId +
+				"businessId=" + id +
 				", name='" + name + '\'' +
 				", email='" + email + '\'' +
 				", foundationDate=" + foundationDate +

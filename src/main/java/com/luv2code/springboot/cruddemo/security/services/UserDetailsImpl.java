@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.luv2code.springboot.cruddemo.entity.Business;
 import com.luv2code.springboot.cruddemo.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,13 +28,16 @@ public class UserDetailsImpl implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
+    private Long businessId;
+
     public UserDetailsImpl(Long id, String username, String email, String password,
-                           Collection<? extends GrantedAuthority> authorities) {
+                           Collection<? extends GrantedAuthority> authorities, Long businessId) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
         this.authorities = authorities;
+        this.businessId=businessId;
     }
 
     public static UserDetailsImpl build(User user) {
@@ -42,11 +46,11 @@ public class UserDetailsImpl implements UserDetails {
                 .collect(Collectors.toList());
 
         return new UserDetailsImpl(
-                user.getUserId(),
+                (long) user.getUserId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
-                authorities);
+                authorities, user.getBusinessId());
     }
 
     @Override
@@ -70,6 +74,10 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public String getUsername() {
         return username;
+    }
+
+    public Long getBusinessId() {
+        return businessId;
     }
 
     @Override

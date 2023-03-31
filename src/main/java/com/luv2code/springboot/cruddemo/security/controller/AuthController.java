@@ -57,6 +57,8 @@ public class AuthController {
     @Autowired
     BusinessRepository businessRepository;
 
+
+
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -67,20 +69,18 @@ public class AuthController {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
-
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE)
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails, roles);
+
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .body(new UserInfoResponse(Math.toIntExact(userDetails.getId()),
                         userDetails.getUsername(),
                         userDetails.getEmail(),
                         roles, jwtCookie.getValue()
                         ));
-
-
     }
 
     @PostMapping("/signup")
@@ -101,7 +101,6 @@ public class AuthController {
             return new ResponseEntity<>("Email is already taken!", HttpStatus.BAD_REQUEST);
         }
 
-
         Business b1 = new Business();
         b1.setName(signUpRequest.getName());
         b1.setEmail(signUpRequest.getEmail());
@@ -119,6 +118,7 @@ public class AuthController {
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
         user.setUsername(signUpRequest.getUsername());
+
 
 
         Set<String> strRoles = signUpRequest.getRole();

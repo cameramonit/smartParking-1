@@ -17,7 +17,7 @@ public class User {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     @Column(name="user_id")
-    private Long userId;
+    private int userId;
 
     @Column(name="first_name")
     private String firstName;
@@ -47,6 +47,7 @@ public class User {
     @Column(name = "username")
     private String username;
 
+    private Long businessId;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinTable(name="user_parking",
@@ -125,11 +126,11 @@ public class User {
 //
 
 
-    public Long getUserId() {
+    public int getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(int userId) {
         this.userId = userId;
     }
 
@@ -152,6 +153,14 @@ public class User {
             parkings = new ArrayList<>();
         }
         parkings.add(theParking);
+    }
+
+    public Long getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(Long businessId) {
+        this.businessId = businessId;
     }
 
     @Override
